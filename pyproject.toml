@@ -1,0 +1,133 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pylintsql"
+version = "0.0.6"
+dependencies = [
+  "sqlfluff>=3.3.1",
+  "toml>=0.10.2",
+  "libcst>=0.4.0",
+  "pathspec>=0.9.0",
+]
+authors = [
+  { name="Mark Manlangit", email="mgs.manlangit@gmail.com" },
+]
+description = "a tool that lints/fixes SQL code within Python strings using SQLFluff"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.0"
+classifiers = [
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/mgs-mnlngt/pylintsql"
+
+[project.scripts]
+pylintsql = "pylintsql.cli:main"
+
+[tool.sqlfluff.core]
+dialect = "bigquery"
+encoding = "utf-8"
+max_line_length = 99
+nocolor = false
+rules = "all"
+verbose = 0
+warn_unused_ignores = true
+exclude_rules = ["RF01", "RF02", "RF04", "ST06"]
+
+[tool.sqlfluff.indentation]
+tab_space_size = 2
+indented_joins = false
+indented_ctes = false
+indented_using_on = true
+indented_on_contents = true
+indented_then = true
+
+[tool.sqlfluff.layout.type.comma]
+line_position = "trailing"
+
+[tool.sqlfluff.rules.aliasing.table]
+aliasing = "implicit"
+
+[tool.sqlfluff.rules.aliasing.column]
+aliasing = "explicit"
+
+[tool.sqlfluff.rules.aliasing.expression]
+allow_scalar = false
+
+[tool.sqlfluff.rules.aliasing.forbid]
+force_enable = false
+
+[tool.sqlfluff.rules.ambiguous.join]
+preferred_join_style = "both"
+
+[tool.sqlfluff.rules.ambiguous.column_references]
+quote_style = "implicit"
+
+[tool.sqlfluff.rules.capitalisation.keywords]
+capitalisation_policy = "upper"
+
+[tool.sqlfluff.rules.capitalisation.identifiers]
+extended_capitalisation_policy = "snake"
+ignore_words_regex = "^l[0-9]_[^_].*$"
+
+[tool.sqlfluff.rules.capitalisation.functions]
+extended_capitalisation_policy = "upper"
+
+[tool.sqlfluff.rules.capitalisation.literals]
+capitalisation_policy = "upper"
+
+[tool.sqlfluff.rules.capitalisation.types]
+extended_capitalisation_policy = "upper"
+
+[tool.sqlfluff.rules.convention.not_equal]
+preferred_not_equal_style = "c_style"
+
+[tool.sqlfluff.rules.convention.select_trailing_comma]
+select_clause_trailing_comma = "forbid"
+
+[tool.sqlfluff.rules.convention.count_rows]
+prefer_count_1 = false
+prefer_count_0 = false
+
+[tool.sqlfluff.rules.convention.terminator]
+require_final_semicolon = true
+multiline_newline = false
+
+[tool.sqlfluff.rules.convention.casting_style]
+preferred_type_casting_style = "cast"
+
+[tool.sqlfluff.rules.convention.quoted_literals]
+force_enable = true
+preferred_quoted_literal_style = "single_quotes"
+
+[tool.sqlfluff.rules.layout.long_lines]
+ignore_comment_clauses = false
+ignore_comment_lines = false
+
+[tool.sqlfluff.rules.layout.select_targets]
+wildcard_policy = "single"
+
+[tool.sqlfluff.rules.references.consistent]
+force_enable = true
+single_table_references = "unqualified"
+
+[tool.sqlfluff.rules.structure.subquery]
+forbid_subquery_in = "both"
+
+[tool.sqlfluff.rules.structure.join_condition_order]
+preferred_first_table_in_join_clause = "earlier"
+
+[tool.pylintsql]
+exclude = [
+    ".venv/**",
+    "build/**",
+    "dist/**",
+    "src/**",
+    "setup.py",
+]
