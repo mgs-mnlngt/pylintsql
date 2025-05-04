@@ -30,5 +30,17 @@ def parse_arguments():
         default=None,
         help="Path to a specific configuration file."
     )
+    parser.add_argument(
+        "--rules",
+        type=str,
+        default=None,
+        help="Comma-separated list of SQLFluff rules to include (overrides config)."
+    )
+    parser.add_argument(
+        "--exclude-rules",
+        type=str,
+        default=None,
+        help="Comma-separated list of SQLFluff rules to exclude (overrides config)."
+    )
     
     return parser.parse_args()

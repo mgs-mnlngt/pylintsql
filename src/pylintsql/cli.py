@@ -17,7 +17,9 @@ def main():
         # Get the SQLFluff configuration
         config = get_sqlfluff_config(
             search_path=args.path,
-            config_path=args.config
+            config_path=args.config,
+            rules=args.rules,
+            exclude_rules=args.exclude_rules,
         )
 
         # Get the matcher for excluded paths

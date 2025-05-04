@@ -8,7 +8,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 def get_sqlfluff_config(
-    search_path=None, config_path=None
+    search_path: str = None, config_path: str = None, rules: list[str] = None, exclude_rules: list[str] = None
 ):
     """
     Load the SQLFluff configuration by using a specific config file if provided,
@@ -21,11 +21,30 @@ def get_sqlfluff_config(
     Returns:
         FluffConfig: The instantiated SQLFluff configuration object.
     """
+
+    def _ensure_list_of_str(value):
+        """
+        Convert a comma‐separated string or a list of strings into a List[str].
+        """
+        if value is None:
+            return []
+        if isinstance(value, str):
+            return [v.strip() for v in value.split(",") if v.strip()]
+        if isinstance(value, list) and all(isinstance(v, str) for v in value):
+            return list(value)
+        raise TypeError(f"Expected str or list[str], got {type(value)}")
+    
+    overrides = {}
+    if rules:
+        overrides["rules"] = _ensure_list_of_str(rules)
+    if exclude_rules:
+        overrides["exclude_rules"] = _ensure_list_of_str(exclude_rules)
+
     # If a specific config file is provided, use it directly
     if config_path:
         if os.path.exists(config_path):
             try:
-                config = FluffConfig.from_path(config_path)
+                config = FluffConfig.from_path(config_path, overrides=overrides)
                 logger.info(f"Loaded configuration from {config_path}")
             except Exception as e:
                 logger.error(f"Error loading configuration from {config_path}: {e}")
@@ -47,7 +66,7 @@ def get_sqlfluff_config(
             if os.path.exists(config_path):
                 try:
                     # Load the configuration from the current file
-                    config = FluffConfig.from_path(config_path)
+                    config = FluffConfig.from_path(config_path, overrides=overrides)
                     logger.info(f"Loaded configuration from {config_path}")
                 except Exception as e:
                     logger.warning(f"Could not load {config_file}. Error: {e}")
