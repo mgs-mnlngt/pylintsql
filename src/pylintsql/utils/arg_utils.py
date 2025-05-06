@@ -34,13 +34,13 @@ def parse_arguments():
         "--rules",
         type=str,
         default=None,
-        help="Comma-separated list of SQLFluff rules to include (overrides config)."
+        help="Comma-separated list of SQLFluff rules to include (merges with config)."
     )
     parser.add_argument(
         "--exclude-rules",
         type=str,
         default=None,
-        help="Comma-separated list of SQLFluff rules to exclude (overrides config)."
+        help="Comma-separated list of SQLFluff rules to exclude (merges with config)."
     )
     
     return parser.parse_args()

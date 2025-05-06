@@ -34,11 +34,44 @@ def get_sqlfluff_config(
             return list(value)
         raise TypeError(f"Expected str or list[str], got {type(value)}")
     
+    # 1) Prepare search order for a SQLFluff config file
+    config_files = ["setup.cfg", "tox.ini", "pep8.ini", ".sqlfluff", "pyproject.toml"]
+    # 2) Find the actual file to read for merging
+    cfg_path = None
+    if config_path and os.path.exists(config_path):
+        cfg_path = config_path
+    else:
+        base = search_path or os.getcwd()
+        for fn in config_files:
+            candidate = os.path.join(base, fn)
+            if os.path.exists(candidate):
+                cfg_path = candidate
+                break
+
+    # 3) Read file‐based rules/excludes (for merging only)
+    file_rules, file_excludes = [], []
+    if cfg_path and cfg_path.endswith(".toml"):
+        try:
+            data = toml.load(cfg_path)
+            core = data.get("tool", {}).get("sqlfluff", {}).get("core", {})
+            file_rules    = core.get("rules", [])
+            file_excludes = core.get("exclude_rules", [])
+        except Exception:
+            pass
+
+    # 4) Normalize & merge CLI + file values
+    cli_rules    = _ensure_list_of_str(rules)
+    cli_excludes = _ensure_list_of_str(exclude_rules)
+    file_rules   = _ensure_list_of_str(file_rules)
+    file_excludes= _ensure_list_of_str(file_excludes)
+
     overrides = {}
-    if rules:
-        overrides["rules"] = _ensure_list_of_str(rules)
-    if exclude_rules:
-        overrides["exclude_rules"] = _ensure_list_of_str(exclude_rules)
+    merged_rules    = sorted(set(file_rules)    | set(cli_rules))
+    merged_excludes = sorted(set(file_excludes) | set(cli_excludes))
+    if merged_rules:
+        overrides["rules"] = merged_rules
+    if merged_excludes:
+        overrides["exclude_rules"] = merged_excludes
 
     # If a specific config file is provided, use it directly
     if config_path:
