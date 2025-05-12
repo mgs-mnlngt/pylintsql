@@ -42,5 +42,12 @@ def parse_arguments():
         default=None,
         help="Comma-separated list of SQLFluff rules to exclude (merges with config)."
     )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="count",
+        default=0,
+        help="Increase output verbosity. -v for summary, -vv for files, -vvv for all details."
+    )
     
     return parser.parse_args()

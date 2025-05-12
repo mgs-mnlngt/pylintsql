@@ -38,7 +38,7 @@ def normalize_sql_indentation(sql_string):
     return "\n".join(normalized_lines)
 
 
-def lint_or_fix_sql(sql, mode, config, file_path=None):
+def lint_or_fix_sql(sql, mode, config, file_path=None, verbose=1):
     """
     Lint or fix a SQL string using the provided FluffConfig object.
 
@@ -47,6 +47,7 @@ def lint_or_fix_sql(sql, mode, config, file_path=None):
         mode (str): Either 'lint' or 'fix'.
         config (FluffConfig): The SQLFluff configuration object.
         file_path (str): The path to the file being processed (for error reporting).
+        verbose (int): Verbosity level (1: summary, 2: files, 3: all details).
 
     Returns:
         tuple[str, int]: A tuple containing:
@@ -58,20 +59,23 @@ def lint_or_fix_sql(sql, mode, config, file_path=None):
         if mode == "fix":
             # Use the FluffConfig object for fixing
             fixed_sql = sqlfluff.fix(sql, config=config)
-            return fixed_sql, 0  # Return 0 issues for fix mode
+            return fixed_sql, -1  # Return 0 issues for fix mode
         else:
             # Use the FluffConfig object for linting
             lint_result = sqlfluff.lint(sql, config=config)
             if lint_result:
                 issues_count = len(lint_result)  # Count the issues
-                print("Error: ", Path(file_path))
-                for error in lint_result:
-                    print(f"  - Code: {error['code']}")
-                    print(f"    Description: {error['description']}")
-                    print(
-                        f"    Line: {error['start_line_no']}, Position: {error['start_line_pos']}"
-                    )
-                    print("-" * 40)
+                if verbose >= 2:
+                    print("Error: ", Path(file_path))
+                    if verbose == 3:
+                        for error in lint_result:
+                            print(f"  - Code: {error['code']}")
+                            print(f"    Description: {error['description']}")
+                            print(
+                                f"    Line: {error['start_line_no']}, Position: {error['start_line_pos']}"
+                            )
+                            print(f"    Possible Fixes: {len(error['fixes'])}")
+                            print("-" * 40)
             # Return original SQL and the count of issues found
             return sql, issues_count
     except Exception as e:
@@ -83,11 +87,12 @@ def lint_or_fix_sql(sql, mode, config, file_path=None):
 class SQLStringTransformer(cst.CSTTransformer):
     """Transform SQL strings marked with --sql prefix."""
 
-    def __init__(self, mode, config, file_path, sql_pattern):
+    def __init__(self, mode, config, file_path, sql_pattern, verbose=1):
         self.mode = mode
         self.config = config
         self.file_path = file_path
         self.sql_pattern = sql_pattern
+        self.verbose = verbose
         self.total_issues_in_file = 0  # Initialize issue counter for the file
 
     def leave_SimpleString(
@@ -119,7 +124,7 @@ class SQLStringTransformer(cst.CSTTransformer):
 
             # --- 3. Lint/Fix Normalized SQL ---
             processed_normalized_sql, issues_found = lint_or_fix_sql(
-                normalized_sql, self.mode, self.config, self.file_path
+                normalized_sql, self.mode, self.config, self.file_path, self.verbose
             )
             self.total_issues_in_file += issues_found
 
@@ -159,7 +164,7 @@ class SQLStringTransformer(cst.CSTTransformer):
             return updated_node
 
 
-def modify_file_in_place(file_path, mode, config, pattern=None):
+def modify_file_in_place(file_path, mode, config, pattern=None, verbose=1):
     """
     Modify a Python file in place by linting or fixing embedded SQL strings.
 
@@ -168,6 +173,7 @@ def modify_file_in_place(file_path, mode, config, pattern=None):
         mode (str): Either 'lint' or 'fix'.
         config (FluffConfig): The SQLFluff configuration object.
         pattern (str): Optional regex pattern to identify SQL strings.
+        verbose (int): Verbosity level (1: summary, 2: files, 3: all details).
 
     Returns:
         int: Number of issues found in the file (0 if none or in fix mode)
@@ -184,7 +190,7 @@ def modify_file_in_place(file_path, mode, config, pattern=None):
         module = cst.parse_module(source_code)
 
         # Create and apply the transformer
-        transformer = SQLStringTransformer(mode, config, file_path, sql_pattern)
+        transformer = SQLStringTransformer(mode, config, file_path, sql_pattern, verbose)
         modified_module = module.visit(transformer)
 
         # Write back the modified code if in fix mode

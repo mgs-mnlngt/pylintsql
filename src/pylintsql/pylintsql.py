@@ -3,14 +3,15 @@ from pylintsql.utils.config_utils import get_sqlfluff_config, get_excluded_paths
 from pylintsql.utils.sql_utils import modify_file_in_place
 from pylintsql.utils.arg_utils import parse_arguments
 
-def process_all_files_in_directory(directory_path, mode, config, excluded_matcher):
+def process_all_files_in_directory(directory_path, mode, config, excluded_matcher, verbose=False):
     """
     Process Python files in directory, skipping excluded paths.
     Returns:
-        int: Total number of SQL issues found across all processed files.
+        tuple[int, int]: Total number of SQL issues found, and number of files with issues.
     """
     root_path = Path(directory_path)
     total_issues = 0
+    affected_files_count = 0
 
     # Find all Python files in the directory tree
     for py_file in root_path.glob("**/*.py"):
@@ -22,10 +23,12 @@ def process_all_files_in_directory(directory_path, mode, config, excluded_matche
             continue
             
         # Accumulate issues from each file
-        file_issues = modify_file_in_place(str(py_file), mode, config)
-        total_issues += file_issues
+        file_issues = modify_file_in_place(str(py_file), mode, config, verbose=verbose)
+        if file_issues > 0:
+            total_issues += file_issues
+            affected_files_count += 1
 
-    return total_issues
+    return total_issues, affected_files_count
 
 if __name__ == "__main__":
     # Parse CLI arguments
@@ -41,4 +44,4 @@ if __name__ == "__main__":
     excluded_matcher = get_excluded_paths(args.path)
 
     # Process all files in the specified directory
-    process_all_files_in_directory(args.path, args.mode, config, excluded_matcher)
+    process_all_files_in_directory(args.path, args.mode, config, excluded_matcher, args.verbose)

@@ -25,16 +25,19 @@ def main():
         # Get the matcher for excluded paths
         excluded_matcher = get_excluded_paths(args.path, args.config)
 
-        # Process the directory - now returns issues count
-        issues_count = process_all_files_in_directory(args.path, args.mode, config, excluded_matcher)
+        # Process the directory
+        issues_count, affected_files = process_all_files_in_directory(args.path, args.mode, config, excluded_matcher, args.verbose)
         
         # Return appropriate exit code
         if issues_count > 0:
-            print(f"{issues_count} SQL linting issues found")
+            print(f"{issues_count} SQL linting issues found in {affected_files} files")
             return 1  # Issues found
+        elif args.mode == "fix":
+            print("SQL Fix executed successfully")
+            return 0  # Success
         else:
             print("No SQL linting issues found")
-            return 0  # Success
+            return 0
             
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
